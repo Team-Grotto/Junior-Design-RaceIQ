@@ -14,6 +14,9 @@ interface Vehicle {
     timeOffset: number
 }
 
+var locations: LatLng[] = []
+
+
 /**
  * Queries Google Maps APIs and returns a list of parsed routes
  * @param API_KEY API Key for Google Maps Platform
@@ -65,6 +68,14 @@ async function fetchDirections(API_KEY: string, client: Client, routes: [[string
 async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, simulationSpeed=1) {
     let elapsedIntervals = 0
 
+    for (const parsedRoute of parsedRoutes) {
+        let location: LatLng = {
+            lat: parsedRoute.points[0][0],
+            lng: parsedRoute.points[0][1]
+        }
+        locations.push(location)
+    }
+
     let interval = setInterval(() => {
         console.log(`At time ${elapsedIntervals * updateInterval}:`)
 
@@ -86,12 +97,15 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
                     lng: points[whole][1] + lngDelta
                 }
 
+                locations[idx] = pos
                 console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
             } else {
                 let pos: LatLng = {
                     lat: points[points.length - 1][0],
                     lng: points[points.length - 1][1]
                 }
+
+                locations[idx] = pos
                 console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
             }
         })
@@ -123,31 +137,50 @@ if (!API_KEY) {
 }
 
 const express = require("express")
+const cors = require("cors");
 const app = express()
 const port = 8080 // default port to listen
 
-app.get("/", (req: any, res: any) => {
-    res.json(simulation);
-})
+app.use(cors())
 
 app.get("/start", async (req: any, res: any) => {
     let parsedRoutes = await fetchDirections(API_KEY, client, routes)
 
-    // Prevents starting multiple times!
+    // Prevents starting multiple times
     if (!simulation) {
         simulation = await startSimulation(parsedRoutes)
-        res.send("Simulation started!")
+        res.json({
+            message: "Simulation started!"
+        })
     } else {
-        res.send("Existing simulation already running! Please stop the simulation in order to start a new one.")
+        res.status(400).json({
+            message: "Existing simulation already running! Please stop the simulation in order to start a new one."
+        })
+    }
+})
+
+app.get("/vehicles", async (req: any, res: any) => {
+    // Prevents starting multiple times!
+    if (!simulation) {
+        // No simulation to send vehicle location data for
+        res.status(400).json({
+            message: "No running simulation to send data for!"
+        })
+    } else {
+        res.json(locations)
     }
 })
 
 app.get("/stop", (req: any, res: any) => {
     if (simulation) {
         stopSimulation(simulation)
-        res.send("Simulation stopped!")
+        res.json({
+            message: "Simulation stopped!"
+        })
     } else {
-        res.send("No running simulation to stop!")
+        res.status(400).json({
+            message: "No running simulation to stop!"
+        })
     }
     simulation = undefined
 })
