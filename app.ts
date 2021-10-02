@@ -8,6 +8,12 @@ interface ParsedRoute {
     duration: number
 }
 
+interface Vehicle {
+    vin: string
+    assignedRoute: number,
+    timeOffset: number
+}
+
 /**
  * Queries Google Maps APIs and returns a list of parsed routes
  * @param API_KEY API Key for Google Maps Platform
@@ -82,7 +88,11 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
 
                 console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
             } else {
-                console.log("\tVehicle %d at location (%f, %f)", idx, points[points.length - 1][0], points[points.length - 1][1])
+                let pos: LatLng = {
+                    lat: points[points.length - 1][0],
+                    lng: points[points.length - 1][1]
+                }
+                console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
             }
         })
 
