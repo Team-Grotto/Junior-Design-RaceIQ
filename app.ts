@@ -1,4 +1,4 @@
-import {Client, LatLng} from "@googlemaps/google-maps-services-js";
+import {Client, LatLng, LatLngLiteral} from "@googlemaps/google-maps-services-js";
 import { exit } from "process";
 
 import { decode, LatLngTuple } from "@googlemaps/polyline-codec";
@@ -10,12 +10,9 @@ interface ParsedRoute {
 
 interface Vehicle {
     vin: string
-    assignedRoute: number,
-    timeOffset: number
+    assignedRoute: number
+    location?: LatLng
 }
-
-var locations: LatLng[] = []
-
 
 /**
  * Queries Google Maps APIs and returns a list of parsed routes
@@ -43,7 +40,6 @@ async function fetchDirections(API_KEY: string, client: Client, routes: [[string
 
         for (const leg of fetchedRoutes[0].legs) {
             duration += leg.duration.value
-
         }
         
         // Right now, we are only interpolating the vehicle between points returned in overview_polyline
@@ -68,12 +64,14 @@ async function fetchDirections(API_KEY: string, client: Client, routes: [[string
 async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, simulationSpeed=1) {
     let elapsedIntervals = 0
 
-    for (const parsedRoute of parsedRoutes) {
+    // Initialize locations
+    for (const vehicle of vehicles) {
+        const route = parsedRoutes[vehicle.assignedRoute]
         let location: LatLng = {
-            lat: parsedRoute.points[0][0],
-            lng: parsedRoute.points[0][1]
+            lat: route.points[0][0],
+            lng: route.points[0][1]
         }
-        locations.push(location)
+        vehicle.location = location
     }
 
     let interval = setInterval(() => {
@@ -92,21 +90,25 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
                 let latDelta = locationDiff[0] * partial
                 let lngDelta = locationDiff[1] * partial
 
-                let pos: LatLng = {
+                let pos: LatLngLiteral = {
                     lat: points[whole][0] + latDelta,
                     lng: points[whole][1] + lngDelta
                 }
 
-                locations[idx] = pos
-                console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
+                vehicles.filter(vehicle => vehicle.assignedRoute == idx).forEach(vehicle => {
+                    vehicle.location = pos
+                    console.log(`\tVehicle ${vehicle.vin} at location (${pos.lat}, ${pos.lng})`)
+                })
             } else {
-                let pos: LatLng = {
+                let pos: LatLngLiteral = {
                     lat: points[points.length - 1][0],
                     lng: points[points.length - 1][1]
                 }
 
-                locations[idx] = pos
-                console.log("\tVehicle %d at location (%f, %f)", idx, pos.lat, pos.lng)
+                vehicles.filter(vehicle => vehicle.assignedRoute == idx).forEach(vehicle => {
+                    vehicle.location = pos
+                    console.log(`\tVehicle ${vehicle.vin} at location (${pos.lat}, ${pos.lng})`)
+                })
             }
         })
 
@@ -131,6 +133,13 @@ const routes: [[string, string]] = [
     ["Cloudman Residence Hall", "McCamish Pavilion"]
 ]
 
+var vehicles: Vehicle[] = [
+    {
+        vin: "JHLRE48577C044959",
+        assignedRoute: 0
+    }
+]
+
 if (!API_KEY) {
     console.log("Couldn't find Google Maps Platform API Key!")
     exit(1)
@@ -144,6 +153,8 @@ const port = 8080 // default port to listen
 app.use(cors())
 
 app.get("/start", async (req: any, res: any) => {
+
+    // TODO: Validate whether there is >1 route and all vehicles are assigned a route
     let parsedRoutes = await fetchDirections(API_KEY, client, routes)
 
     // Prevents starting multiple times
@@ -159,6 +170,12 @@ app.get("/start", async (req: any, res: any) => {
     }
 })
 
+// TODO:
+// POST a new route
+// app.post()
+// POST a new vehicle
+// app.post()
+
 app.get("/vehicles", async (req: any, res: any) => {
     // Prevents starting multiple times!
     if (!simulation) {
@@ -167,7 +184,7 @@ app.get("/vehicles", async (req: any, res: any) => {
             message: "No running simulation to send data for!"
         })
     } else {
-        res.json(locations)
+        res.json(vehicles)
     }
 })
 
