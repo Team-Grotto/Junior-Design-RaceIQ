@@ -31,6 +31,18 @@ class Configurations extends Component {
         this.setState({addState: 3});
     }
 
+    addJSX() {
+        if (this.state.addState === 1) {
+            return <AddVehicle />;
+        } else if(this.state.addState === 2) {
+            return <AddRoute />
+        } else if(this.state.addState === 3) {
+            return <AddPair />
+        } else {
+            return null;
+        }
+    }
+
     render() {
         var x = document.getElementById("addVehicle");
         console.log(x);
@@ -41,9 +53,7 @@ class Configurations extends Component {
                 <button onClick={() => this.addRoute()}>Add Route</button>
                 <button onClick={() => this.addPair()}>Pair Vehicle with route</button>
                 <hr />
-                <AddVehicle />
-                <AddRoute />
-                <AddPair />
+                {this.addJSX()}
             </div>
         );
     }
