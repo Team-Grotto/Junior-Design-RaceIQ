@@ -20,7 +20,7 @@ interface Vehicle {
  * @param routes Human readable list of routes (strings) - [start, end]
  * @returns Queries Google Maps API and returns a list of parsed routes
  */
-async function fetchDirections(API_KEY: string, client: Client, routes: [[string, string]]) {
+async function fetchDirections(API_KEY: string, client: Client, routes: [string, string][]) {
 
     let parsedRoutes: ParsedRoute[] = []
 
@@ -129,14 +129,19 @@ const API_KEY = process.env["API_KEY"]
 
 let simulation: (undefined|NodeJS.Timer)
 
-const routes: [[string, string]] = [
-    ["Cloudman Residence Hall", "McCamish Pavilion"]
+const routes: [string, string][] = [
+    ["Cloudman Residence Hall", "McCamish Pavilion"],
+    ["Georgia Tech Campus Recreation Center", "North Avenue Apartments"]
 ]
 
 var vehicles: Vehicle[] = [
     {
         vin: "JHLRE48577C044959",
         assignedRoute: 0
+    },
+    {
+        vin: "2MEFM75W4XX622535",
+        assignedRoute: 1
     }
 ]
 
@@ -151,6 +156,10 @@ const app = express()
 const port = 8080 // default port to listen
 
 app.use(cors())
+
+app.get("/", (req: any, res: any) => {
+    res.send("Backend API for RaceIQ Simulation Platform")
+})
 
 app.get("/start", async (req: any, res: any) => {
 
