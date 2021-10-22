@@ -1,7 +1,8 @@
 class Vehicle {
-    constructor(vin, location) {
+    constructor(vin="", asssignedRoute=null, location=null) {
         this.vin = vin;
         this.location = location;
+        this.assignedRoute = asssignedRoute;
     }
 }
 export default Vehicle;

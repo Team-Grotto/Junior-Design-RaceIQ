@@ -2,7 +2,7 @@ import React, {Component} from 'react'
 import { Router, Switch, Route, HashRouter } from 'react-router-dom';
 import createBrowserHistory from 'history/createBrowserHistory';
 import Home from './components/Home';
-import Configurations from './components/Configurations';
+import Configuration from './components/Configuration';
 import Simulation from './components/Simulation';
 
 class Routes extends Component {
@@ -11,7 +11,7 @@ class Routes extends Component {
             <HashRouter>
                 <Switch>
                     <Route exact path="/" component={Home} />
-                    <Route path="/configurations" component={Configurations} />
+                    <Route path="/configuration" component={Configuration} />
                     <Route path="/simulation" component={Simulation} />
                     <Route><h1>The requested page was not found.</h1></Route>
                 </Switch>
