@@ -1,9 +1,9 @@
 import React, {Component} from 'react'
 import { Router, Switch, Route, HashRouter } from 'react-router-dom';
 import createBrowserHistory from 'history/createBrowserHistory';
-import Home from './components/Home';
-import Configuration from './components/Configuration';
-import Simulation from './components/Simulation';
+import Home from './Components/Home';
+import Configurations from './Components/Configurations';
+import Simulation from './Components/Simulation';
 
 class Routes extends Component {
     render() {
