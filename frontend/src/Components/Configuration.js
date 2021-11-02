@@ -117,6 +117,7 @@ class Configuration extends Component {
     // Make POST to backend and update state
     editRoute(routeId) {
         // TODO: Implement this!
+        console.log("test")
     }
 
     // Make POST to backend and update state
@@ -145,6 +146,20 @@ class Configuration extends Component {
     closeAddVehicleModal() {
         this.setState({
             showAddVehicleModal: false
+        })
+    }
+
+    openEditVehicleModal(vin) {
+        console.log("Test 1");
+        this.setState({
+            editingVehicleId: vin,
+            showEditVehicleModal: true
+        });
+    }
+
+    closeEditVehicleModal() {
+        this.setState({
+            showEditVehicleModal: false
         })
     }
 
@@ -179,6 +194,44 @@ class Configuration extends Component {
             </Modal>
         )
     }
+
+    vehicleEditModal() {
+        if (!this.state.editingVehicleId) {
+            return;
+        }
+        const vehicle = this.state.vehicles[this.getIndexFromVin(this.state.editingVehicleId)];
+        return (
+            <Modal
+                isOpen={this.state.showEditVehicleModal}
+                onRequestClose={this.closeEditVehicleModal.bind(this)}
+                contentLabel="Editing Vehicle"
+                style={modalStyles}
+            >
+                <div className="d-flex justify-content-center ps-4 pe-4">
+                    <h1>Edit</h1>
+                </div>
+                <form onSubmit={(event) => this.editVehicle(event, vehicle.vin)}>
+                    <button className="btn btn-secondary btn-sm" onClick={this.closeEditVehicleModal.bind(this)}>close</button>
+                    <div className="form-group">
+                        <label htmlFor="editVin">VIN:</label>
+                        <input type="text" defaultValue={vehicle.vin} id="editVin" name="vin" className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="editAssignedRoute">Assigned Route:</label>
+                        <select id="editAssignedRoute" defaultValue={vehicle.assignedRoute} name="assignedRoute" className="form-control">
+                            {this.state.routes.map((route) => 
+                                <option key={route.id} value={route.id}>{route.toString()}</option>
+                            )}
+                        </select>
+                    </div>
+                    <br />
+                    <button type="submit" className="btn btn-primary mb-2">Submit</button>
+                </form>
+            </Modal>
+        )
+    }
+
+
 
     openAddRouteModal() {
         this.setState({
@@ -240,7 +293,7 @@ class Configuration extends Component {
                                     <td>{route.start}</td>
                                     <td>{route.end}</td>
                                     <td>
-                                        <button className="btn btn-secondary btn-sm me-2 disabled" onCLick={() => {this.editRoute(route.id)}}>Edit</button>
+                                        <button className="btn btn-secondary btn-sm me-2 disabled" onClick={() => {this.editRoute(route.id)}}>Edit</button>
                                         <button className="btn btn-danger btn-sm" onClick={() => {this.deleteRoute(route.id)}}>Delete</button>
                                     </td>
                                 </tr>
@@ -287,7 +340,7 @@ class Configuration extends Component {
                                     <td>{vehicle.vin}</td>
                                     <td>{renderAssignedRoute(vehicle.assignedRoute)}</td>
                                     <td>
-                                        <button className="btn btn-secondary btn-sm me-2 disabled">Edit</button>
+                                        <button className="btn btn-secondary btn-sm me-2" onClick={() => this.openEditVehicleModal(vehicle.vin)}>Edit</button>
                                         <button className="btn btn-danger btn-sm" onClick={() => {this.deleteVehicle(vehicle.vin)}}>Delete</button>
                                     </td>
                                 </tr>
@@ -301,6 +354,7 @@ class Configuration extends Component {
         return (
             <>
                 {this.vehicleModal()}
+                {this.vehicleEditModal()}
                 {content}
                 <button className="btn btn-primary mb-4" onClick={this.openAddVehicleModal.bind(this)}>Add Vehicle</button>
                 <br />
