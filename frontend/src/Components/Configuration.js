@@ -1,5 +1,4 @@
 import React, {Component} from 'react'
-import Config from './Classes/Config';
 
 import Route from './Classes/Route';
 import Vehicle from './Classes/Vehicle';
