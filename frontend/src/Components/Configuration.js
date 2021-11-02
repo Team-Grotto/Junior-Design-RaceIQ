@@ -240,7 +240,7 @@ class Configuration extends Component {
                                     <td>{route.start}</td>
                                     <td>{route.end}</td>
                                     <td>
-                                        <button className="btn btn-secondary btn-sm me-2 disabled">Edit</button>
+                                        <button className="btn btn-secondary btn-sm me-2 disabled" onCLick={() => {this.editRoute(route.id)}}>Edit</button>
                                         <button className="btn btn-danger btn-sm" onClick={() => {this.deleteRoute(route.id)}}>Delete</button>
                                     </td>
                                 </tr>
