@@ -367,6 +367,7 @@ class Configuration extends Component {
         return (
             <>
                 {this.routeModal()}
+                {this.editRouteModal()}
                 {content}
                 
                 <button className="btn btn-primary mb-4" onClick={this.openAddRouteModal.bind(this)}>Add Route</button>
@@ -380,13 +381,6 @@ class Configuration extends Component {
 
         const renderAssignedRoute = (assignedRoute) => {
             let idx = this.getIndexFromRouteId(assignedRoute)
-
-            console.log(assignedRoute)
-
-            console.log(this.state.routes)
-            console.log(idx)
-
-
             let route = this.state.routes[idx]
 
             return route.toString()
