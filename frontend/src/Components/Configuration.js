@@ -68,8 +68,28 @@ class Configuration extends Component {
     }
 
     // Make POST to backend and update state
-    editVehicle(vin) {
-        // TODO: Implement this!
+    editVehicle(event) {
+        event.preventDefault() // Prevents weird stuff that usually happens after onSubmit
+
+        let vin = event.target.elements.vin.value
+        let assignedRoute = event.target.elements.assignedRoute.value
+        let index = this.getIndexFromVin(this.state.editingVehicleId);
+
+        // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
+
+        // If all checks pass...
+        // Placeholder code - usually would be returned by backend
+        if (true) {
+            // TODO: Make more efficient if need be
+            let copy = this.state.vehicles.slice(); 
+            copy.splice(index, 1, new Vehicle(vin, assignedRoute));
+            this.setState({
+                editingVehicleId: null,
+                editingRouteId: null,
+                vehicles: copy
+            })
+            this.closeEditVehicleModal()
+        }
     }
 
     // Make POST to backend and update state
@@ -97,7 +117,9 @@ class Configuration extends Component {
         let end = event.target.elements.end.value
 
         // FIXME: SCUFFED WAY OF CHOOSING A NEW ID?
-        let id = Math.max(...this.state.routes.map(r => r.id), -1) + 1
+        let id = (Math.max(...this.state.routes.map(r => r.id), -1) + 1).toString();
+
+        console.log(id)
 
         // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
 
@@ -117,7 +139,6 @@ class Configuration extends Component {
     // Make POST to backend and update state
     editRoute(routeId) {
         // TODO: Implement this!
-        console.log("test")
     }
 
     // Make POST to backend and update state
@@ -150,7 +171,6 @@ class Configuration extends Component {
     }
 
     openEditVehicleModal(vin) {
-        console.log("Test 1");
         this.setState({
             editingVehicleId: vin,
             showEditVehicleModal: true
@@ -245,11 +265,51 @@ class Configuration extends Component {
         })
     }
 
+    openEditRouteModal() {
+        this.setState({
+            showEditRouteModal: true
+        })
+    }
+
+    closeEditRouteModal() {
+        this.setState({
+            showEditRouteModal: false
+        })
+    }
+
     routeModal() {
         return (
             <Modal
                 isOpen={this.state.showAddRouteModal}
                 onRequestClose={this.closeAddRouteModal.bind(this)}
+                contentLabel="Add a Route"
+                style={modalStyles}
+            >
+                <div className="d-flex justify-content-center ps-4 pe-4">
+                    <h1>Add a Route</h1>
+                </div>
+                <form onSubmit={this.addRoute}>
+                    <button className="btn btn-secondary btn-sm" onClick={this.closeAddRouteModal.bind(this)}>close</button>
+                    <div className="form-group">
+                        <label htmlFor="addStart">Start Address:</label>
+                        <input type="text" id="addStart" name="start" className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="addEnd">End Address:</label>
+                        <input type="text" id="addEnd" name="end" className="form-control" />
+                    </div>
+                    <br />
+                    <button type="submit" className="btn btn-primary mb-2">Submit</button>
+                </form>
+            </Modal>
+        )
+    }
+
+    editRouteModal() {
+        return (
+            <Modal
+                isOpen={this.state.showEditRouteModal}
+                onRequestClose={this.closeEditRouteModal.bind(this)}
                 contentLabel="Add a Route"
                 style={modalStyles}
             >
@@ -293,7 +353,7 @@ class Configuration extends Component {
                                     <td>{route.start}</td>
                                     <td>{route.end}</td>
                                     <td>
-                                        <button className="btn btn-secondary btn-sm me-2 disabled" onClick={() => {this.editRoute(route.id)}}>Edit</button>
+                                        <button className="btn btn-secondary btn-sm me-2" onClick={() => {this.openEditRouteModal()}}>Edit</button>
                                         <button className="btn btn-danger btn-sm" onClick={() => {this.deleteRoute(route.id)}}>Delete</button>
                                     </td>
                                 </tr>
@@ -320,6 +380,13 @@ class Configuration extends Component {
 
         const renderAssignedRoute = (assignedRoute) => {
             let idx = this.getIndexFromRouteId(assignedRoute)
+
+            console.log(assignedRoute)
+
+            console.log(this.state.routes)
+            console.log(idx)
+
+
             let route = this.state.routes[idx]
 
             return route.toString()
