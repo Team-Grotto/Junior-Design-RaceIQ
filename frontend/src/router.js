@@ -1,6 +1,5 @@
 import React, {Component} from 'react'
 import { Router, Switch, Route, HashRouter } from 'react-router-dom';
-import createBrowserHistory from 'history/createBrowserHistory';
 import Home from './Components/Home';
 import Configuration from './Components/Configuration';
 import Simulation from './Components/Simulation';

@@ -7,6 +7,8 @@ import { faCar } from '@fortawesome/free-solid-svg-icons'
 
 import './marker.css'
 
+import API from '../api';
+
 const mapStyle = {
     width: '100%',
     height: '85vh',
@@ -15,27 +17,27 @@ const mapStyle = {
 
 const mapboxApiKey = process.env.MAPBOX_KEY
 
-const CustomPopup = ({ index, marker, closePopup, remove }) => {
+const CustomPopup = ({ vehicle, closePopup }) => {
     return (
         <Popup
-            latitude={marker.latitude}
-            longitude={marker.longitude}
+            latitude={vehicle.location.lat}
+            longitude={vehicle.location.lng}
             onClose={closePopup}
             closeButton={true}
             closeOnClick={false}
             offsetTop={-30}
         >
-            <p className="pt-3"><b>{marker.title}</b></p>
-            <p>{marker.subtitle}</p>
+            <p className="pt-3"><b>{vehicle.vin}</b></p>
+            <p>{vehicle.assignedRoute}</p>
         </Popup>
     )
 };
 
-const CustomMarker = ({ index, marker, openPopup }) => {
+const CustomMarker = ({ index, vehicle, openPopup }) => {
     return (
         <Marker
-            longitude={marker.longitude}
-            latitude={marker.latitude}>
+            longitude={vehicle.location.lng}
+            latitude={vehicle.location.lat}>
             <div className="marker" onClick={() => openPopup(index)}>
                 <span><b><FontAwesomeIcon icon={faCar} /></b></span>
             </div>
@@ -53,9 +55,9 @@ class Simulation extends PureComponent {
                 longitude: -84.3963,
                 zoom: 14.8
             },
-            tempMarker: null,
-            markers: [{latitude: 33.77692, longitude: -84.3943, title: "VIN: 2GNFLFEK7F6202470", subtitle: "Assigned Route: Cloudman Residence Hall --> Campus Recreation Center"}],
-            selectedIndex: null
+            vehicles: [],
+            selectedIndex: null,
+            pollTimer: null
         };
 
     }
@@ -72,35 +74,38 @@ class Simulation extends PureComponent {
         this.setSelectedMarker(index)
     }
 
-    onSelected = (viewport, item) => {
-        this.setState({
-            viewport,
-            tempMarker: {
-                name: item.place_name,
-                longitude: item.center[0],
-                latitude: item.center[1]
-            }
+    poll = function () {
+        console.log("Polling")
+        API.get("/locations").then((res) => {
+            console.log(res.data)
+            this.setState({vehicles: res.data})
+        }).catch((error) => {
+            console.log(error)
         })
     }
 
-    add = () => {
-        var { tempMarker } = this.state
-
-        this.setState(prevState => ({
-            markers: [...prevState.markers, tempMarker],
-            tempMarker: null
-        }))
+    startSimulation = function () {
+        API.get("/start").then((res) => {
+            // TODO: TOAST OR SMT?
+            let pollTimer = setInterval(this.poll.bind(this), 1000)
+            this.setState({pollTimer: pollTimer})
+        }).catch((error) => {
+            console.log(error)
+        })
     }
 
-    remove = (index) => {
-        this.setState(prevState => ({
-            markers: prevState.markers.filter((marker, i) => index !== i),
-            selectedIndex: null
-        }))
+
+    stopSimulation = function () {
+        API.get("/stop").then((res) => {
+            clearInterval(this.state.pollTimer)
+            this.setState({pollTimer: null})
+        }).catch((error) => {
+            console.log(error)
+        })
     }
 
     render() {
-        const { viewport, tempMarker, markers } = this.state;
+        const { viewport, vehicles } = this.state;
         return (
             <Container fluid={true}>
                 <Row>
@@ -108,7 +113,8 @@ class Simulation extends PureComponent {
                 </Row>
                 <Row className="mb-2">
                     <Col>
-                        <Button color="primary">Start Simulation!</Button>
+                        <Button color="primary" className="me-2" onClick={this.startSimulation.bind(this)}>Start Simulation!</Button>
+                        <Button color="primary" className="me-2" onClick={this.stopSimulation.bind(this)}>Stop Simulation!</Button>
                     </Col>
                     <Col>
                         <FormGroup className="w-50">
@@ -134,12 +140,12 @@ class Simulation extends PureComponent {
                             onViewportChange={(viewport) => this.setState({ viewport })}
                         >
                             {
-                                this.state.markers.map((marker, index) => {
+                                this.state.vehicles.map((vehicle, index) => {
                                     return (
                                         <CustomMarker
                                             key={`marker-${index}`}
                                             index={index}
-                                            marker={marker}
+                                            vehicle={vehicle}
                                             openPopup={this.openPopup}
                                         />
                                     )
@@ -148,10 +154,8 @@ class Simulation extends PureComponent {
                             {
                                 this.state.selectedIndex !== null &&
                                 <CustomPopup
-                                    index={this.state.selectedIndex}
-                                    marker={markers[this.state.selectedIndex]}
+                                    vehicle={vehicles[this.state.selectedIndex]}
                                     closePopup={this.closePopup}
-                                    remove={this.remove}
                                 />
                             }
                         </ReactMapGL>
