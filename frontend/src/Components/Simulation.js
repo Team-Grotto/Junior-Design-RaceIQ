@@ -1,20 +1,19 @@
 import React, { PureComponent } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
-import { Container, Col, Row, Button } from 'reactstrap';
+import { Container, Col, Row, Button, Input, FormGroup, Label } from 'reactstrap';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCar } from '@fortawesome/free-solid-svg-icons'
 
 import './marker.css'
 
 const mapStyle = {
     width: '100%',
-    height: 600,
+    height: '85vh',
     float: 'center'
 }
 
-const mapboxApiKey = process.env.REACT_APP_MAPBOX_KEY
-
-const params = {
-    country: "us"
-}
+const mapboxApiKey = process.env.MAPBOX_KEY
 
 const CustomPopup = ({ index, marker, closePopup, remove }) => {
     return (
@@ -26,10 +25,8 @@ const CustomPopup = ({ index, marker, closePopup, remove }) => {
             closeOnClick={false}
             offsetTop={-30}
         >
-            <p>{marker.name}</p>
-            <div>
-                <Button color="secondary" onClick={() => remove(index)}>Remove</Button>
-            </div>
+            <p className="pt-3"><b>{marker.title}</b></p>
+            <p>{marker.subtitle}</p>
         </Popup>
     )
 };
@@ -40,7 +37,7 @@ const CustomMarker = ({ index, marker, openPopup }) => {
             longitude={marker.longitude}
             latitude={marker.latitude}>
             <div className="marker" onClick={() => openPopup(index)}>
-                <span><b>{index + 1}</b></span>
+                <span><b><FontAwesomeIcon icon={faCar} /></b></span>
             </div>
         </Marker>
     )
@@ -57,7 +54,7 @@ class Simulation extends PureComponent {
                 zoom: 14.8
             },
             tempMarker: null,
-            markers: [{latitude: 33.7756, longitude: -84.3963}],
+            markers: [{latitude: 33.77692, longitude: -84.3943, title: "VIN: 2GNFLFEK7F6202470", subtitle: "Assigned Route: Cloudman Residence Hall --> Campus Recreation Center"}],
             selectedIndex: null
         };
 
@@ -107,7 +104,25 @@ class Simulation extends PureComponent {
         return (
             <Container fluid={true}>
                 <Row>
-                    <Col><h2>Geocoding Demo</h2></Col>
+                    <Col><h2>Simulation</h2></Col>
+                </Row>
+                <Row className="mb-2">
+                    <Col>
+                        <Button color="primary">Start Simulation!</Button>
+                    </Col>
+                    <Col>
+                        <FormGroup className="w-50">
+                            <Label for="simspeed">
+                                Simulation Speed
+                            </Label>
+                            <Input
+                                id="simspeed"
+                                name="range"
+                                type="range"
+                            />
+                        </FormGroup>
+                    </Col>
+                    <Col />
                 </Row>
                 <Row>
                     <Col>
@@ -118,11 +133,6 @@ class Simulation extends PureComponent {
                             {...mapStyle}
                             onViewportChange={(viewport) => this.setState({ viewport })}
                         >
-                            {/* <Marker
-                                longitude={-84.3963}
-                                latitude={33.7756}>
-                                <div className="marker"><span></span></div>
-                            </Marker> */}
                             {
                                 this.state.markers.map((marker, index) => {
                                     return (
