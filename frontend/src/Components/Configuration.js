@@ -4,6 +4,7 @@ import Route from './Classes/Route';
 import Vehicle from './Classes/Vehicle';
 
 import Modal from 'react-modal';
+import { Button } from 'reactstrap';
 
 const modalStyles = {
     content: {
@@ -130,7 +131,7 @@ class Configuration extends Component {
             this.setState({
                 routes: newRoutes
             })
-            this.closeEditRouteModal()
+            this.closeAddRouteModal()
         }
     }
 
@@ -297,6 +298,10 @@ class Configuration extends Component {
         })
     }
 
+    disableRouteDelete(id) {
+        return this.state.vehicles.some(e => e.assignedRoute == id);
+    }
+
     routeModal() {
         return (
             <Modal
@@ -378,7 +383,7 @@ class Configuration extends Component {
                                     <td>{route.end}</td>
                                     <td>
                                         <button className="btn btn-secondary btn-sm me-2" onClick={() => {this.openEditRouteModal(route.id)}}>Edit</button>
-                                        <button className="btn btn-danger btn-sm" onClick={() => {this.deleteRoute(route.id)}}>Delete</button>
+                                        <Button color="danger" size='sm' onClick={() => {this.deleteRoute(route.id)}} disabled = {this.disableRouteDelete(route.id)}>Delete</Button>
                                     </td>
                                 </tr>
                             )}
