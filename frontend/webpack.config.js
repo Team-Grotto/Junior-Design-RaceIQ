@@ -1,3 +1,8 @@
+const webpack = require('webpack'); // only add this if you don't have yet
+
+// replace accordingly './.env' with the path of your .env file 
+require('dotenv').config({ path: './.env' }); 
+
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const htmlPlugin = new HtmlWebPackPlugin({
  template: "./src/index.html",
@@ -18,5 +23,10 @@ mode: 'development',
    use: ["style-loader", "css-loader"]
   }
 ]},
- plugins: [htmlPlugin]
+ plugins: [
+   htmlPlugin,
+   new webpack.DefinePlugin({
+    "process.env": JSON.stringify(process.env)
+   }),
+  ]
 };
