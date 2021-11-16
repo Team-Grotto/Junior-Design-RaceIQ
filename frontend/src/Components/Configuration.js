@@ -2,9 +2,12 @@ import React, {Component} from 'react'
 
 import Route from './Classes/Route';
 import Vehicle from './Classes/Vehicle';
+import Toasts from './Classes/Toasts'
 
 import Modal from 'react-modal';
 import { Button } from 'reactstrap';
+
+import { ToastContainer, toast } from 'react-toastify';
 
 const modalStyles = {
     content: {
@@ -64,6 +67,11 @@ class Configuration extends Component {
                 vehicles: newVehicles
             })
             this.closeAddVehicleModal()
+            Toasts.addVehicleSuccess();
+        } else {
+            // TODO: State sanitization
+            this.closeAddVehicleModal()
+            Toasts.addVehicleError();
         }
 
     }
@@ -131,7 +139,12 @@ class Configuration extends Component {
             this.setState({
                 routes: newRoutes
             })
+            this.closeAddRouteModal();
+            Toasts.addRouteSuccess();
+        }else {
+            // TODO: State sanitization
             this.closeAddRouteModal()
+            Toasts.addRouteError();
         }
     }
 
@@ -302,6 +315,18 @@ class Configuration extends Component {
         return this.state.vehicles.some(e => e.assignedRoute == id);
     }
 
+    showToast() {
+        toast('🦄 Wow so easy!', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            });
+    }
+
     routeModal() {
         return (
             <Modal
@@ -455,6 +480,7 @@ class Configuration extends Component {
     render() {
         return (
             <div className="container">
+                <ToastContainer />
                 <h1>Simulation Configuration</h1>
                 <hr />
                 <button className="btn btn-secondary mb-2">Clear All</button>

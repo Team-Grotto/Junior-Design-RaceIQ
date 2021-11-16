@@ -5,6 +5,7 @@ import Routes from "./router"
 import Modal from 'react-modal'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 Modal.setAppElement('#root');
 
