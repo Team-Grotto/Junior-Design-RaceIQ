@@ -2,6 +2,9 @@ import React, { PureComponent } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
 import { Container, Col, Row, Button, Input, FormGroup, Label } from 'reactstrap';
 
+import { ToastContainer } from 'react-toastify';
+import Toasts from './Classes/Toasts';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCar } from '@fortawesome/free-solid-svg-icons'
 
@@ -77,30 +80,24 @@ class Simulation extends PureComponent {
     poll = function () {
         console.log("Polling")
         API.get("/locations").then((res) => {
-            console.log(res.data)
             this.setState({vehicles: res.data})
-        }).catch((error) => {
-            console.log(error)
         })
     }
 
     startSimulation = function () {
         API.get("/start").then((res) => {
-            // TODO: TOAST OR SMT?
+            Toasts.success(res.data.message)
             let pollTimer = setInterval(this.poll.bind(this), 1000)
             this.setState({pollTimer: pollTimer})
-        }).catch((error) => {
-            console.log(error)
         })
     }
 
 
     stopSimulation = function () {
         API.get("/stop").then((res) => {
+            Toasts.success(res.data.message)
             clearInterval(this.state.pollTimer)
             this.setState({pollTimer: null})
-        }).catch((error) => {
-            console.log(error)
         })
     }
 
@@ -108,6 +105,7 @@ class Simulation extends PureComponent {
         const { viewport, vehicles } = this.state;
         return (
             <Container fluid={true}>
+                <ToastContainer />
                 <Row>
                     <Col><h2>Simulation</h2></Col>
                 </Row>

@@ -5,9 +5,5 @@ class Route{
         this.end = end;
         this.waypoints = waypoints;
     }
-
-    toString() {
-        return this.start + " --> " + this.end
-    }
 }
 export default Route;

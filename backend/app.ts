@@ -3,14 +3,29 @@ import { exit } from "process";
 
 import { decode, LatLngTuple } from "@googlemaps/polyline-codec";
 
+class Route {
+    id: string
+    start: string
+    end: string
+    waypoints: string[]
+
+    constructor(id: string, start="", end="", waypoints=[]) {
+        this.id = id
+        this.start = start;
+        this.end = end;
+        this.waypoints = waypoints;
+    }
+}
+
 interface ParsedRoute {
+    id: string
     points: LatLngTuple[]
     duration: number
 }
 
 interface Vehicle {
     vin: string
-    assignedRoute: number
+    assignedRoute: string
     location?: LatLng
 }
 
@@ -20,15 +35,15 @@ interface Vehicle {
  * @param routes Human readable list of routes (strings) - [start, end]
  * @returns Queries Google Maps API and returns a list of parsed routes
  */
-async function fetchDirections(API_KEY: string, client: Client, routes: [string, string][]) {
+async function fetchDirections(API_KEY: string, client: Client, routes: Route[]) {
 
     let parsedRoutes: ParsedRoute[] = []
 
     for (const route of routes) {
         const directions = await client.directions({
             params: {
-              origin: route[0],
-              destination: route[1],
+              origin: route.start,
+              destination: route.end,
               key: API_KEY,
             },
             timeout: 1000, // milliseconds
@@ -46,6 +61,7 @@ async function fetchDirections(API_KEY: string, client: Client, routes: [string,
         // We can change this to use the points from each leg, if needed
         // This approach works for now, because the expected granularity for the simulation is not too precise
         let parsedRoute: ParsedRoute = {
+            id: route.id,
             points: decode(fetchedRoutes[0].overview_polyline.points),
             duration: duration
         }
@@ -66,12 +82,16 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
 
     // Initialize locations
     for (const vehicle of vehicles) {
-        const route = parsedRoutes[vehicle.assignedRoute]
-        let location: LatLng = {
-            lat: route.points[0][0],
-            lng: route.points[0][1]
+        const route = parsedRoutes.find(parsedRoute => parsedRoute.id === vehicle.assignedRoute)
+        if (route) {
+            let location: LatLng = {
+                lat: route.points[0][0],
+                lng: route.points[0][1]
+            }
+            vehicle.location = location
+        } else {
+            console.error("Vehicle was assigned to an invalid route!")
         }
-        vehicle.location = location
     }
 
     let interval = setInterval(() => {
@@ -95,7 +115,7 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
                     lng: points[whole][1] + lngDelta
                 }
 
-                vehicles.filter(vehicle => vehicle.assignedRoute == idx).forEach(vehicle => {
+                vehicles.filter(vehicle => vehicle.assignedRoute === parsedRoute.id).forEach(vehicle => {
                     vehicle.location = pos
                     console.log(`\tVehicle ${vehicle.vin} at location (${pos.lat}, ${pos.lng})`)
                 })
@@ -105,7 +125,7 @@ async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, si
                     lng: points[points.length - 1][1]
                 }
 
-                vehicles.filter(vehicle => vehicle.assignedRoute == idx).forEach(vehicle => {
+                vehicles.filter(vehicle => vehicle.assignedRoute === parsedRoute.id).forEach(vehicle => {
                     vehicle.location = pos
                     console.log(`\tVehicle ${vehicle.vin} at location (${pos.lat}, ${pos.lng})`)
                 })
@@ -129,19 +149,19 @@ const API_KEY = process.env["API_KEY"]
 
 let simulation: (undefined|NodeJS.Timer)
 
-const routes: [string, string][] = [
-    ["Cloudman Residence Hall", "McCamish Pavilion"],
-    ["Georgia Tech Campus Recreation Center", "North Avenue Apartments"]
+const routes: Route[] = [
+    new Route("0", "Cloudman Residence Hall", "McCamish Pavilion"),
+    new Route("1", "Georgia Tech Campus Recreation Center", "North Avenue Apartments")
 ]
 
 var vehicles: Vehicle[] = [
     {
         vin: "JHLRE48577C044959",
-        assignedRoute: 0
+        assignedRoute: "0"
     },
     {
         vin: "2MEFM75W4XX622535",
-        assignedRoute: 1
+        assignedRoute: "1"
     }
 ]
 
@@ -156,9 +176,10 @@ const app = express()
 const port = 8080 // default port to listen
 
 app.use(cors())
+app.use(express.json())    // <==== parse request body as JSON
 
 app.get("/", (req: any, res: any) => {
-    res.send("Backend API for RaceIQ Simulation Platform")
+    res.json({message: "Backend API for RaceIQ Simulation Platform"})
 })
 
 app.get("/start", async (req: any, res: any) => {
@@ -179,13 +200,64 @@ app.get("/start", async (req: any, res: any) => {
     }
 })
 
-// TODO:
-// POST a new route
-// app.post()
-// POST a new vehicle
-// app.post()
+// Returns the current configuration of the simulation
+app.get("/config", async (req: any, res: any) => {
+    res.json({
+        routes: routes,
+        vehicles: vehicles
+    })
+})
 
-app.get("/vehicles", async (req: any, res: any) => {
+// POST a new route
+app.post("/addRoute", async (req: any, res: any) => {
+    // TODO: UUIDs
+    if (req.body) {
+        const newRoute: Route = req.body
+
+        if (!newRoute.id || routes.find(route => route.id === newRoute.id)) {
+            res.status(400).json({
+                message: "Bad request, route has missing/duplicate id"
+            })
+            return
+        }
+
+        routes.push(newRoute)
+        res.json({
+            routes: routes
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no route object was provided"
+        })
+    }
+})
+
+// POST a new vehicle
+app.post("/addVehicle", async (req: any, res: any) => {
+    if (req.body) {
+        const newVehicle: Vehicle = req.body
+
+        if (!newVehicle.vin || vehicles.find(vehicle => vehicle.vin === newVehicle.vin)) {
+            res.status(400).json({
+                message: "Bad request, vehicle has missing/duplicate id"
+            })
+            return
+        }
+
+        
+        vehicles.push(req.body)
+        console.log(vehicles)
+        res.json({
+            vehicles: vehicles
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no vehicle object was provided"
+        })
+    }
+})
+
+app.get("/locations", async (req: any, res: any) => {
     // Prevents starting multiple times!
     if (!simulation) {
         // No simulation to send vehicle location data for

@@ -1,6 +1,30 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 class Toasts {
+    static error(message) {
+        toast.error(message, {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: false,
+            progress: undefined,
+            });
+    }
+
+    static success(message) {
+        toast.success(message, {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: false,
+            progress: undefined,
+            });
+    }
+
     static addRouteSuccess() {
         toast.success('Added Route Successfully', {
             position: "top-center",

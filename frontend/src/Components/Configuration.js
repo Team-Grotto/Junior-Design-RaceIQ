@@ -8,6 +8,7 @@ import Modal from 'react-modal';
 import { Button } from 'reactstrap';
 
 import { ToastContainer, toast } from 'react-toastify';
+import API from '../api';
 
 const modalStyles = {
     content: {
@@ -20,6 +21,10 @@ const modalStyles = {
       width: "40%"
     },
 };
+
+const routeToString = (route) => {
+    return route.start + " --> " + route.end
+}
 
 class Configuration extends Component {
     
@@ -37,9 +42,14 @@ class Configuration extends Component {
             editingRouteId: null
         };
 
-        // NOTE: Modifying state like this can *probably* safely be done only in the constructor
-        this.state.routes.push(new Route("1", "Cloudman", "CRC"))
-        // this.state.vehicles.push(new Vehicle("ABCDXYZ1234", 1))
+        API.get("/config").then((res) => {
+            if (res.data && res.data.routes && res.data.vehicles) {
+                this.setState({
+                    routes: res.data.routes,
+                    vehicles: res.data.vehicles
+                })
+            }
+        })
     }
 
     getIndexFromRouteId(routeId) {
@@ -57,22 +67,15 @@ class Configuration extends Component {
         let vin = event.target.elements.vin.value
         let assignedRoute = event.target.elements.assignedRoute.value
 
-        // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
+        // TODO: SO INPUT VALIDATION!
+        // TODO: UUIDs
+        API.post("/addVehicle", new Vehicle(vin, assignedRoute)).then((res) => {
+            this.setState({vehicles: res.data.vehicles})
+            this.closeAddVehicleModal()
+            Toasts.addVehicleSuccess()
+        })
 
-        // If all checks pass...
-        // Placeholder code - usually would be returned by backend
-        if (true) {
-            let newVehicles = this.state.vehicles.concat(new Vehicle(vin, assignedRoute))
-            this.setState({
-                vehicles: newVehicles
-            })
-            this.closeAddVehicleModal()
-            Toasts.addVehicleSuccess();
-        } else {
-            // TODO: State sanitization
-            this.closeAddVehicleModal()
-            Toasts.addVehicleError();
-        }
+        // TODO: State sanitization
 
     }
 
@@ -237,7 +240,7 @@ class Configuration extends Component {
                         <label htmlFor="addAssignedRoute">Assigned Route:</label>
                         <select id="addAssignedRoute" name="assignedRoute" className="form-control">
                             {this.state.routes.map((route) => 
-                                <option key={route.id} value={route.id}>{route.toString()}</option>
+                                <option key={route.id} value={route.id}>{routeToString(route)}</option>
                             )}
                         </select>
                     </div>
@@ -273,7 +276,7 @@ class Configuration extends Component {
                         <label htmlFor="editAssignedRoute">Assigned Route:</label>
                         <select id="editAssignedRoute" defaultValue={vehicle.assignedRoute} name="assignedRoute" className="form-control">
                             {this.state.routes.map((route) => 
-                                <option key={route.id} value={route.id}>{route.toString()}</option>
+                                <option key={route.id} value={route.id}>{routeToString(route)}</option>
                             )}
                         </select>
                     </div>
@@ -313,18 +316,6 @@ class Configuration extends Component {
 
     disableRouteDelete(id) {
         return this.state.vehicles.some(e => e.assignedRoute == id);
-    }
-
-    showToast() {
-        toast('🦄 Wow so easy!', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            });
     }
 
     routeModal() {
@@ -437,7 +428,7 @@ class Configuration extends Component {
             let idx = this.getIndexFromRouteId(assignedRoute)
             let route = this.state.routes[idx]
 
-            return route.toString()
+            return routeToString(route)
         }
 
         if (this.state.vehicles.length > 0) {
