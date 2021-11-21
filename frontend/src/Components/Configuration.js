@@ -132,23 +132,15 @@ class Configuration extends Component {
         let id = (Math.max(...this.state.routes.map(r => r.id), -1) + 1).toString();
 
 
-        // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
-
-        // If all checks pass...
-        // Placeholder code - usually would be returned by backend
-        if (true) {
-
-            let newRoutes = this.state.routes.concat(new Route(id, start, end))
-            this.setState({
-                routes: newRoutes
-            })
-            this.closeAddRouteModal();
-            Toasts.addRouteSuccess();
-        }else {
-            // TODO: State sanitization
+        // TODO: INPUT VALIDATION!
+        // TODO: UUIDs
+        API.post("/addRoute", new Route(id, start, end)).then((res) => {
+            this.setState({routes: res.data.routes})
             this.closeAddRouteModal()
-            Toasts.addRouteError();
-        }
+            Toasts.addRouteSuccess()
+        })
+
+        // TODO: State sanitization
     }
 
     // Make POST to backend and update state

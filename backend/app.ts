@@ -149,21 +149,25 @@ const API_KEY = process.env["API_KEY"]
 
 let simulation: (undefined|NodeJS.Timer)
 
-const routes: Route[] = [
-    new Route("0", "Cloudman Residence Hall", "McCamish Pavilion"),
-    new Route("1", "Georgia Tech Campus Recreation Center", "North Avenue Apartments")
-]
+// const routes: Route[] = [
+//     new Route("0", "Cloudman Residence Hall", "McCamish Pavilion"),
+//     new Route("1", "Georgia Tech Campus Recreation Center", "North Avenue Apartments")
+// ]
 
-var vehicles: Vehicle[] = [
-    {
-        vin: "JHLRE48577C044959",
-        assignedRoute: "0"
-    },
-    {
-        vin: "2MEFM75W4XX622535",
-        assignedRoute: "1"
-    }
-]
+const routes: Route[] = []
+
+// var vehicles: Vehicle[] = [
+//     {
+//         vin: "JHLRE48577C044959",
+//         assignedRoute: "0"
+//     },
+//     {
+//         vin: "2MEFM75W4XX622535",
+//         assignedRoute: "1"
+//     }
+// ]
+
+var vehicles: Vehicle[] = []
 
 if (!API_KEY) {
     console.log("Couldn't find Google Maps Platform API Key!")
@@ -211,6 +215,7 @@ app.get("/config", async (req: any, res: any) => {
 // POST a new route
 app.post("/addRoute", async (req: any, res: any) => {
     // TODO: UUIDs
+    console.log("adding route")
     if (req.body) {
         const newRoute: Route = req.body
 
