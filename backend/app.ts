@@ -1,7 +1,9 @@
 import {Client, LatLng, LatLngLiteral} from "@googlemaps/google-maps-services-js";
-import { exit } from "process";
 
 import { decode, LatLngTuple } from "@googlemaps/polyline-codec";
+
+const fs = require("fs")
+const path = require("path")
 
 class Route {
     id: string
@@ -170,8 +172,16 @@ const routes: Route[] = []
 var vehicles: Vehicle[] = []
 
 if (!API_KEY) {
-    console.log("Couldn't find Google Maps Platform API Key!")
-    exit(1)
+    throw "Couldn't find Google Maps Platform API Key!"
+}
+
+const directory = "./saved_configs"
+try {
+    if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory)
+    }
+} catch (err) {
+    throw "Couldn't access or create directory to save configs in!"
 }
 
 const express = require("express")
@@ -184,6 +194,27 @@ app.use(express.json())    // <==== parse request body as JSON
 
 app.get("/", (req: any, res: any) => {
     res.json({message: "Backend API for RaceIQ Simulation Platform"})
+})
+
+app.get("/getConfigs", async (req: any, res: any) => {
+    let files: string[] = fs.readdirSync(directory)
+    files = files.filter(file => file.endsWith(".json"))
+
+    res.json(files)
+})
+
+app.post("/saveConfig", async (req: any, res: any) => {
+    if (req.body) {
+        let fileName = req.body
+        fileName = path.join(directory, fileName)
+        try {
+            fs.writeFileSync(fileName, { routes: routes, vehicles: vehicles })
+        } catch (err) {
+            res.status(500).json({
+                message: "Internal Server Error: Failed to save configuration file."
+            })
+        }
+    }
 })
 
 app.get("/start", async (req: any, res: any) => {
@@ -226,7 +257,6 @@ app.get("/config", async (req: any, res: any) => {
 // POST a new route
 app.post("/addRoute", async (req: any, res: any) => {
     // TODO: UUIDs
-    console.log("adding route")
     if (req.body) {
         const newRoute: Route = req.body
 
@@ -239,7 +269,6 @@ app.post("/addRoute", async (req: any, res: any) => {
 
         routes.push(newRoute)
 
-        console.log(routes)
         res.json({
             routes: routes,
             message: "Added route successfully!"
@@ -266,7 +295,6 @@ app.post("/editRoute", async (req: any, res: any) => {
         const idx = routes.findIndex(route => route.id === newRoute.id)
         routes[idx] = newRoute
 
-        console.log(routes)
         res.json({
             routes: routes,
             message: "Edited route successfully!"
@@ -292,7 +320,6 @@ app.delete("/deleteRoute", async (req: any, res: any) => {
         const idx = routes.findIndex(route => route.id === routeId)
         routes.splice(idx, 1)
 
-        console.log(routes)
         res.json({
             routes: routes,
             message: "Deleted route successfully!"
@@ -317,7 +344,6 @@ app.post("/addVehicle", async (req: any, res: any) => {
         }
 
         vehicles.push(newVehicle)
-        console.log(vehicles)
         res.json({
             vehicles: vehicles,
             message: "Added vehicle successfully!"
@@ -345,7 +371,6 @@ app.post("/editVehicle", async (req: any, res: any) => {
         const idx = vehicles.findIndex(vehicle => vehicle.vin === oldVIN)
         vehicles[idx] = newVehicle
 
-        console.log(vehicles)
         res.json({
             vehicles: vehicles,
             message: "Edited vehicle successfully!"
@@ -371,7 +396,6 @@ app.delete("/deleteVehicle", async (req: any, res: any) => {
         const idx = vehicles.findIndex(vehicle => vehicle.vin === vehicleId)
         vehicles.splice(idx, 1)
 
-        console.log(vehicles)
         res.json({
             vehicles: vehicles,
             message: "Deleted vehicle successfully!"
