@@ -92,12 +92,12 @@ class Simulation extends PureComponent {
         })
     }
 
-
     stopSimulation = function () {
         API.get("/stop").then((res) => {
             Toasts.success(res.data.message)
             clearInterval(this.state.pollTimer)
             this.setState({pollTimer: null})
+            window.location.reload();
         })
     }
 
