@@ -20,7 +20,7 @@ const mapStyle = {
 
 const mapboxApiKey = process.env.MAPBOX_KEY
 
-const CustomPopup = ({ vehicle, closePopup }) => {
+const CustomPopup = ({ vehicle, closePopup, routes }) => {
     return (
         <Popup
             latitude={vehicle.location.lat}
@@ -31,7 +31,7 @@ const CustomPopup = ({ vehicle, closePopup }) => {
             offsetTop={-30}
         >
             <p className="pt-3"><b>{vehicle.vin}</b></p>
-            <p>{vehicle.assignedRoute}</p>
+            <p>{routeToString(routes[getIndexFromRouteId(vehicle.assignedRoute, routes)])}</p>
         </Popup>
     )
 };
@@ -48,6 +48,14 @@ const CustomMarker = ({ index, vehicle, openPopup }) => {
     )
 };
 
+const getIndexFromRouteId = function (routeId, routes) {
+    return routes.findIndex(route => route.id === routeId)
+}
+
+const routeToString = (route) => {
+    return route.start + " --> " + route.end
+}
+
 class Simulation extends PureComponent {
 
     constructor(props) {
@@ -59,10 +67,19 @@ class Simulation extends PureComponent {
                 zoom: 14.8
             },
             vehicles: [],
+            routes: [],
             selectedIndex: null,
-            pollTimer: null
+            pollTimer: null,
+            simspeed: 1.0
         };
 
+        API.get("/config").then((res) => {
+            if (res.data && res.data.routes && res.data.vehicles) {
+                this.setState({
+                    routes: res.data.routes
+                })
+            }
+        })
     }
 
     setSelectedMarker = (index) => {
@@ -117,12 +134,17 @@ class Simulation extends PureComponent {
                     <Col>
                         <FormGroup className="w-50">
                             <Label for="simspeed">
-                                Simulation Speed
+                                Simulation Speed: {this.state.simspeed}
                             </Label>
                             <Input
                                 id="simspeed"
-                                name="range"
+                                name="simspeed"
                                 type="range"
+                                min="0.25"
+                                max="4"
+                                step="0.25"
+                                value={this.state.simspeed}
+                                onChange={e => this.setState({ simspeed: e.target.value })}
                             />
                         </FormGroup>
                     </Col>
@@ -154,6 +176,7 @@ class Simulation extends PureComponent {
                                 <CustomPopup
                                     vehicle={vehicles[this.state.selectedIndex]}
                                     closePopup={this.closePopup}
+                                    routes={this.state.routes}
                                 />
                             }
                         </ReactMapGL>
@@ -165,12 +188,3 @@ class Simulation extends PureComponent {
 }
 
 export default Simulation;
-// TODO: VIK - "ONLY THE VEHICLES THAT HAVE A ROUTE WILL BE IN THE SIMULATION" (October 2021)
-// class Simulation extends Component {
-//     render() {
-//         return (
-//             <h1>This is where the simulator will be</h1>
-//         );
-//     }
-// }
-// export default Simulation;
