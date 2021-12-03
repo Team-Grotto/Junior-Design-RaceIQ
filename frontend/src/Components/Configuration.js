@@ -6,6 +6,7 @@ import Toasts from './Classes/Toasts'
 
 import Modal from 'react-modal';
 import { Button } from 'reactstrap';
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 import { ToastContainer, toast } from 'react-toastify';
 import API from '../api';
@@ -42,7 +43,9 @@ class Configuration extends Component {
             showAddRouteModal: false,
             showEditRouteModal: false,
             editingVehicleId: null,
-            editingRouteId: null
+            editingRouteId: null,
+            filename: "",
+            savedFiles: []
         };
 
         API.get("/config").then((res) => {
@@ -50,6 +53,14 @@ class Configuration extends Component {
                 this.setState({
                     routes: res.data.routes,
                     vehicles: res.data.vehicles
+                })
+            }
+        })
+
+        API.get("/getConfigs").then((res) => {
+            if (res.data) {
+                this.setState({
+                    savedFiles: res.data
                 })
             }
         })
@@ -290,6 +301,38 @@ class Configuration extends Component {
         return this.state.vehicles.some(e => e.assignedRoute == id);
     }
 
+    clearAll() {
+        API.get("/clearAll").then(res => {
+            this.setState({
+                routes: res.data.routes,
+                vehicles: res.data.vehicles
+            })
+            Toasts.success(res.data.message)
+        })
+    }
+
+    saveConfig() {
+        if (this.state.filename.length > 0) {
+            API.post("/saveConfig", { filename: this.state.filename }).then(res => {
+                Toasts.success(res.data.message)
+            })
+        }
+    }
+
+    loadConfig() {
+        if (this.state.filename.length > 0) {
+            API.post("/loadConfig", { filename: this.state.filename }).then((res) => {
+                if (res.data && res.data.routes && res.data.vehicles) {
+                    this.setState({
+                        routes: res.data.routes,
+                        vehicles: res.data.vehicles
+                    })
+                    Toasts.success(res.data.message)
+                }
+            })
+        }
+    }
+
     routeModal() {
         return (
             <Modal
@@ -450,7 +493,7 @@ class Configuration extends Component {
                 <ToastContainer />
                 <h1>Simulation Configuration</h1>
                 <hr />
-                <button className="btn btn-secondary mb-2">Clear All</button>
+                <button className="btn btn-secondary mb-2" onClick={this.clearAll.bind(this)}>Clear All</button>
                 <h2>Add Routes</h2>
                 {this.renderRoutes()}
                 <h2>Add Vehicles</h2>
@@ -459,10 +502,23 @@ class Configuration extends Component {
                 <div className="d-flex justify-content-center">
                     <a href="/#/simulation" className="btn btn-primary btn-lg mb-4">Start Simulation!</a>
                 </div>
-
+                <label htmlFor="filename">Filename:</label>
+                <div className="input-group w-75">
+                    <UncontrolledDropdown>
+                        <DropdownToggle caret>
+                            Saved Files
+                        </DropdownToggle>
+                        <DropdownMenu>
+                            {this.state.savedFiles.map((file, index) =>
+                                <DropdownItem key={index} onClick={() => {this.setState({filename: file})}}>{file}</DropdownItem>
+                            )}
+                        </DropdownMenu>
+                    </UncontrolledDropdown>
+                    <input type="text" id="filename" name="filename" value={this.state.filename} onChange={(e) => {this.setState({ filename: e.target.value })}} className="form-control" />
+                </div>
                 <br />
-                <button className="btn btn-secondary me-2">Save Config</button>
-                <button className="btn btn-secondary">Load Config</button>
+                <button className="btn btn-secondary me-2" onClick={this.saveConfig.bind(this)}>Save Config</button>
+                <button className="btn btn-secondary" onClick={this.loadConfig.bind(this)}>Load Config</button>
             </div>
         );
     }

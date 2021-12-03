@@ -156,7 +156,7 @@ let simulation: (undefined|NodeJS.Timer)
 //     new Route("1", "Georgia Tech Campus Recreation Center", "North Avenue Apartments")
 // ]
 
-const routes: Route[] = []
+var routes: Route[] = []
 
 // var vehicles: Vehicle[] = [
 //     {
@@ -198,20 +198,50 @@ app.get("/", (req: any, res: any) => {
 
 app.get("/getConfigs", async (req: any, res: any) => {
     let files: string[] = fs.readdirSync(directory)
-    files = files.filter(file => file.endsWith(".json"))
+    // files = files.filter(file => file.endsWith(".json"))
 
     res.json(files)
 })
 
 app.post("/saveConfig", async (req: any, res: any) => {
     if (req.body) {
-        let fileName = req.body
+        let fileName = req.body.filename
         fileName = path.join(directory, fileName)
         try {
-            fs.writeFileSync(fileName, { routes: routes, vehicles: vehicles })
+            fs.writeFileSync(fileName, JSON.stringify({ routes: routes, vehicles: vehicles }))
         } catch (err) {
+            console.error(err)
             res.status(500).json({
                 message: "Internal Server Error: Failed to save configuration file."
+            })
+        }
+        res.json({
+            message: "Saved config successfully!"
+        })
+    }
+})
+
+app.post("/loadConfig", async (req: any, res: any) => {
+    if (req.body) {
+        let filename = req.body.filename
+        filename = path.join(directory, filename)
+
+        try {
+            let data = fs.readFileSync(filename)
+            data = JSON.parse(data)
+
+            routes = data.routes
+            vehicles = data.vehicles
+
+            res.json({
+                message: "Loaded config successfully!",
+                routes: data.routes,
+                vehicles: data.vehicles
+            })
+        } catch (err) {
+            console.error(err)
+            res.status(500).json({
+                message: "Internal Server Error: Failed to load configuration file."
             })
         }
     }
