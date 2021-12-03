@@ -10,6 +10,9 @@ import { Button } from 'reactstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import API from '../api';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimes } from '@fortawesome/free-solid-svg-icons'
+
 const modalStyles = {
     content: {
       top: '50%',
@@ -68,7 +71,6 @@ class Configuration extends Component {
         let assignedRoute = event.target.elements.assignedRoute.value
 
         // TODO: SO INPUT VALIDATION!
-        // TODO: UUIDs
         API.post("/addVehicle", new Vehicle(vin, assignedRoute)).then((res) => {
             this.setState({vehicles: res.data.vehicles})
             this.closeAddVehicleModal()
@@ -85,40 +87,26 @@ class Configuration extends Component {
 
         let vin = event.target.elements.vin.value
         let assignedRoute = event.target.elements.assignedRoute.value
-        let index = this.getIndexFromVin(this.state.editingVehicleId);
 
-        // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
-
-        // If all checks pass...
-        // Placeholder code - usually would be returned by backend
-        if (true) {
-            // TODO: Make more efficient if need be
-            let copy = this.state.vehicles.slice(); 
-            copy.splice(index, 1, new Vehicle(vin, assignedRoute));
+        // TODO: DO INPUT VALIDATION!
+        API.post("/editVehicle", { vehicle: new Vehicle(vin, assignedRoute), oldVIN: this.state.editingVehicleId }).then((res) => {
             this.setState({
-                editingVehicleId: null,
-                editingRouteId: null,
-                vehicles: copy
+                vehicles: res.data.vehicles,
+                editingVehicleId: null
             })
             this.closeEditVehicleModal()
-        }
+            Toasts.success(res.data.message)
+        })
     }
 
     // Make POST to backend and update state
     deleteVehicle(vin) {
-        // TODO: MAKE POST REQUEST
-
-        // If all checks pass...
-        if (true) {
-            // This is placeholder code, normally we would use the values returned by backend
-            // Deep copy for safety
-            let newVehicles = JSON.parse(JSON.stringify(this.state.vehicles))
-            let idx = this.getIndexFromVin(vin)
-            newVehicles.splice(idx, 1)
+        API.delete("/deleteVehicle", vin).then((res) => {
             this.setState({
-                vehicles: newVehicles
+                vehicles: res.data.vehicles,
             })
-        }
+            Toasts.success(res.data.message)
+        })
     }
 
     // Make POST to backend and update state
@@ -150,40 +138,26 @@ class Configuration extends Component {
         let start = event.target.elements.start.value;
         let end = event.target.elements.end.value;
 
-        console.log(this)
-
-        let index = this.getIndexFromRouteId(this.state.editingRouteId);
-
-        // TODO: MAKE POST REQUEST AND DO INPUT VALIDATION!
-
-        // If all checks pass...
-        // Placeholder code - usually would be returned by backend
-        if (true) {
-            let copy = this.state.routes.slice(); 
-            copy.splice(index, 1, new Route(this.state.editingRouteId, start, end));
+        // TODO: INPUT VALIDATION!
+        API.post("/editRoute", new Route(this.state.editingRouteId, start, end)).then((res) => {
             this.setState({
-                editingRouteId: null,
-                routes: copy
+                routes: res.data.routes,
+                editingRouteId: null
             })
-            this.closeAddRouteModal()
-        }
+            this.closeEditRouteModal()
+            Toasts.success(res.data.message)
+        })
     }
 
     // Make POST to backend and update state
     deleteRoute(routeId) {
-        // TODO: MAKE POST REQUEST
-
-        // If all checks pass...
-        if (true) {
-            // This is placeholder code, normally we would use the values returned by backend
-            // Deep copy for safety
-            let newRoutes = JSON.parse(JSON.stringify(this.state.routes))
-            let idx = this.getIndexFromRouteId(routeId)
-            newRoutes.splice(idx, 1)
+        
+        API.delete("/deleteRoute", routeId).then((res) => {
             this.setState({
-                routes: newRoutes
+                routes: res.data.routes,
             })
-        }
+            Toasts.success(res.data.message)
+        })
     }
 
     openAddVehicleModal() {
@@ -207,7 +181,8 @@ class Configuration extends Component {
 
     closeEditVehicleModal() {
         this.setState({
-            showEditVehicleModal: false
+            showEditVehicleModal: false,
+            editingVehicleId: null
         })
     }
 
@@ -215,15 +190,17 @@ class Configuration extends Component {
         return (
             <Modal
                 isOpen={this.state.showAddVehicleModal}
-                onRequestClose={this.closeAddVehicleModal.bind(this)}
+                // onRequestClose={this.closeAddVehicleModal.bind(this)}
                 contentLabel="Add a Vehicle"
                 style={modalStyles}
             >
                 <div className="d-flex justify-content-center ps-4 pe-4">
                     <h1>Add a Vehicle</h1>
                 </div>
+                <div className="d-flex justify-content-end">
+                    <button className="btn btn-link btn-sm" onClick={this.closeAddVehicleModal.bind(this)}><FontAwesomeIcon icon={faTimes} /></button>
+                </div>
                 <form onSubmit={this.addVehicle}>
-                    <button className="btn btn-secondary btn-sm" onClick={this.closeAddVehicleModal.bind(this)}>close</button>
                     <div className="form-group">
                         <label htmlFor="addVin">VIN:</label>
                         <input type="text" id="addVin" name="vin" className="form-control" />
@@ -251,15 +228,17 @@ class Configuration extends Component {
         return (
             <Modal
                 isOpen={this.state.showEditVehicleModal}
-                onRequestClose={this.closeEditVehicleModal.bind(this)}
+                // onRequestClose={this.closeEditVehicleModal.bind(this)}
                 contentLabel="Editing Vehicle"
                 style={modalStyles}
             >
                 <div className="d-flex justify-content-center ps-4 pe-4">
-                    <h1>Edit</h1>
+                    <h1>Edit Vehicle</h1>
+                </div>
+                <div className="d-flex justify-content-end">
+                    <button className="btn btn-link btn-sm" onClick={this.closeEditVehicleModal.bind(this)}><FontAwesomeIcon icon={faTimes} /></button>
                 </div>
                 <form onSubmit={(event) => this.editVehicle(event, vehicle.vin)}>
-                    <button className="btn btn-secondary btn-sm" onClick={this.closeEditVehicleModal.bind(this)}>close</button>
                     <div className="form-group">
                         <label htmlFor="editVin">VIN:</label>
                         <input type="text" defaultValue={vehicle.vin} id="editVin" name="vin" className="form-control" />
@@ -302,7 +281,8 @@ class Configuration extends Component {
 
     closeEditRouteModal() {
         this.setState({
-            showEditRouteModal: false
+            showEditRouteModal: false,
+            editingRouteId: null
         })
     }
 
@@ -314,15 +294,17 @@ class Configuration extends Component {
         return (
             <Modal
                 isOpen={this.state.showAddRouteModal}
-                onRequestClose={this.closeAddRouteModal.bind(this)}
+                // onRequestClose={this.closeAddRouteModal.bind(this)}
                 contentLabel="Add a Route"
                 style={modalStyles}
             >
                 <div className="d-flex justify-content-center ps-4 pe-4">
                     <h1>Add a Route</h1>
                 </div>
+                <div className="d-flex justify-content-end">
+                    <button className="btn btn-link btn-sm" onClick={this.closeAddRouteModal.bind(this)}><FontAwesomeIcon icon={faTimes} /></button>
+                </div>
                 <form onSubmit={this.addRoute}>
-                    <button className="btn btn-secondary btn-sm" onClick={this.closeAddRouteModal.bind(this)}>close</button>
                     <div className="form-group">
                         <label htmlFor="addStart">Start Address:</label>
                         <input type="text" id="addStart" name="start" className="form-control" />
@@ -346,15 +328,17 @@ class Configuration extends Component {
         return (
             <Modal
                 isOpen={this.state.showEditRouteModal}
-                onRequestClose={this.closeEditRouteModal.bind(this)}
+                // onRequestClose={this.closeEditRouteModal.bind(this)}
                 contentLabel="Edit Route"
                 style={modalStyles}
             >
                 <div className="d-flex justify-content-center ps-4 pe-4">
                     <h1>Edit Route</h1>
                 </div>
+                <div className="d-flex justify-content-end">
+                    <button className="btn btn-link btn-sm" onClick={this.closeEditRouteModal.bind(this)}><FontAwesomeIcon icon={faTimes} /></button>
+                </div>
                 <form onSubmit={this.editRoute.bind(this)}>
-                    <button className="btn btn-secondary btn-sm" onClick={this.closeEditRouteModal.bind(this)}>close</button>
                     <div className="form-group">
                         <label htmlFor="addStart">Start Address:</label>
                         <input type="text" defaultValue={route.start} id="addStart" name="start" className="form-control" />
@@ -473,7 +457,7 @@ class Configuration extends Component {
                 {this.renderVehicles()}
 
                 <div className="d-flex justify-content-center">
-                    <button className="btn btn-primary btn-lg mb-4">Start Simulation!</button>
+                    <a href="/#/simulation" className="btn btn-primary btn-lg mb-4">Start Simulation!</a>
                 </div>
 
                 <br />

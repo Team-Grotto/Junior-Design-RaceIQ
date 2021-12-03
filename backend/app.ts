@@ -204,11 +204,22 @@ app.get("/start", async (req: any, res: any) => {
     }
 })
 
+app.get("/clearAll", async (req: any, res: any) => {
+    routes.splice(0)
+    vehicles.splice(0)
+
+    res.json({
+        routes: routes,
+        vehicles: vehicles,
+        message: "Cleared all saved routes and vehicles!"
+    })
+})
+
 // Returns the current configuration of the simulation
 app.get("/config", async (req: any, res: any) => {
     res.json({
         routes: routes,
-        vehicles: vehicles
+        vehicles: vehicles,
     })
 })
 
@@ -227,12 +238,68 @@ app.post("/addRoute", async (req: any, res: any) => {
         }
 
         routes.push(newRoute)
+
+        console.log(routes)
         res.json({
-            routes: routes
+            routes: routes,
+            message: "Added route successfully!"
         })
     } else {
         res.status(400).json({
-            message: "Bad request, no route object was provided"
+            message: "Bad request, no route was provided"
+        })
+    }
+})
+
+// POST: Edit a route
+app.post("/editRoute", async (req: any, res: any) => {
+    if (req.body) {
+        // FIXME: Assumes that the route's id is unchanged
+        const newRoute: Route = req.body
+
+        if (!newRoute.id || routes.findIndex(route => route.id === newRoute.id) === -1) {
+            res.status(400).json({
+                message: "Bad request, route has missing/unknown id"
+            })
+        }
+
+        const idx = routes.findIndex(route => route.id === newRoute.id)
+        routes[idx] = newRoute
+
+        console.log(routes)
+        res.json({
+            routes: routes,
+            message: "Edited route successfully!"
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no route was provided"
+        })
+    }
+})
+
+// DELETE: Delete a route
+app.delete("/deleteRoute", async (req: any, res: any) => {
+    if (req.body) {
+        const routeId: string = req.body
+
+        if (!routeId) {
+            res.status(400).json({
+                message: "Bad request, missing route id"
+            })
+        }
+
+        const idx = routes.findIndex(route => route.id === routeId)
+        routes.splice(idx, 1)
+
+        console.log(routes)
+        res.json({
+            routes: routes,
+            message: "Deleted route successfully!"
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no route id was provided"
         })
     }
 })
@@ -249,15 +316,69 @@ app.post("/addVehicle", async (req: any, res: any) => {
             return
         }
 
-        
-        vehicles.push(req.body)
+        vehicles.push(newVehicle)
         console.log(vehicles)
         res.json({
-            vehicles: vehicles
+            vehicles: vehicles,
+            message: "Added vehicle successfully!"
         })
     } else {
         res.status(400).json({
-            message: "Bad request, no vehicle object was provided"
+            message: "Bad request, no vehicle was provided"
+        })
+    }
+})
+
+// POST a new vehicle
+app.post("/editVehicle", async (req: any, res: any) => {
+    if (req.body) {
+        const newVehicle: Vehicle = req.body.vehicle
+        const oldVIN = req.body.oldVIN
+
+        if (!newVehicle.vin || vehicles.findIndex(vehicle => vehicle.vin === oldVIN) === -1) {
+            res.status(400).json({
+                message: "Bad request, vehicle has missing id"
+            })
+            return
+        }
+
+        const idx = vehicles.findIndex(vehicle => vehicle.vin === oldVIN)
+        vehicles[idx] = newVehicle
+
+        console.log(vehicles)
+        res.json({
+            vehicles: vehicles,
+            message: "Edited vehicle successfully!"
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no vehicle was provided"
+        })
+    }
+})
+
+// DELETE: Delete a vehicle
+app.delete("/deleteVehicle", async (req: any, res: any) => {
+    if (req.body) {
+        const vehicleId: string = req.body
+
+        if (!vehicleId) {
+            res.status(400).json({
+                message: "Bad request, missing vehicle id"
+            })
+        }
+
+        const idx = vehicles.findIndex(vehicle => vehicle.vin === vehicleId)
+        vehicles.splice(idx, 1)
+
+        console.log(vehicles)
+        res.json({
+            vehicles: vehicles,
+            message: "Deleted vehicle successfully!"
+        })
+    } else {
+        res.status(400).json({
+            message: "Bad request, no vehicle id was provided"
         })
     }
 })
