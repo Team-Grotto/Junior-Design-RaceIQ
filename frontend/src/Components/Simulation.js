@@ -118,6 +118,15 @@ class Simulation extends PureComponent {
         })
     }
 
+    changeSpeed = function (e) {
+        API.post("/changeSpeed", {simspeed: e.target.value}).then(res => {
+            this.setState({
+                simspeed: e.target.value
+            })
+            Toasts.success(res.data.message)
+        })
+    }
+
     render() {
         const { viewport, vehicles } = this.state;
         return (
@@ -144,7 +153,7 @@ class Simulation extends PureComponent {
                                 max="4"
                                 step="0.25"
                                 value={this.state.simspeed}
-                                onChange={e => this.setState({ simspeed: e.target.value })}
+                                onChange={this.changeSpeed.bind(this)}
                             />
                         </FormGroup>
                     </Col>

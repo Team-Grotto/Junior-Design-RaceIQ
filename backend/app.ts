@@ -79,7 +79,7 @@ async function fetchDirections(API_KEY: string, client: Client, routes: Route[])
  * @param updateInterval Number of milliseconds to update vehicle positions (default: 1)
  * @param simulationSpeed Multiplier on speed to run simulation at (default: 1)
  */
-async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1, simulationSpeed=1) {
+async function startSimulation(parsedRoutes: ParsedRoute[], updateInterval=1) {
     let elapsedIntervals = 0
 
     // Initialize locations
@@ -150,24 +150,9 @@ const client = new Client({});
 const API_KEY = process.env["API_KEY"]
 
 let simulation: (undefined|NodeJS.Timer)
-
-// const routes: Route[] = [
-//     new Route("0", "Cloudman Residence Hall", "McCamish Pavilion"),
-//     new Route("1", "Georgia Tech Campus Recreation Center", "North Avenue Apartments")
-// ]
+let simulationSpeed: number = 1.0
 
 var routes: Route[] = []
-
-// var vehicles: Vehicle[] = [
-//     {
-//         vin: "JHLRE48577C044959",
-//         assignedRoute: "0"
-//     },
-//     {
-//         vin: "2MEFM75W4XX622535",
-//         assignedRoute: "1"
-//     }
-// ]
 
 var vehicles: Vehicle[] = []
 
@@ -263,6 +248,13 @@ app.get("/start", async (req: any, res: any) => {
             message: "Existing simulation already running! Please stop the simulation in order to start a new one."
         })
     }
+})
+
+app.post("/changeSpeed", async (req: any, res: any) => {
+    simulationSpeed = req.body.simspeed
+    res.json({
+        message: "Changed simulation speed!"
+    })
 })
 
 app.get("/clearAll", async (req: any, res: any) => {
